@@ -1,0 +1,216 @@
+# 三个传教士和三个食人族的问题，拆分为三段
+# 1；前岸：由船的运输决定
+# 2：船上：包含两个人的三种搭配情况
+# 3：后岸：由船的运输决定
+# 用递归解决
+
+# 人类
+import random
+from copy import copy, deepcopy
+
+
+class Person:
+    def __init__(self, kind: bool):  # 传教士是True,食人族是False
+        self.kind = kind
+
+
+# 河岸类
+class Bank:
+    def __init__(self, name: str):
+        self.name = name
+        self.True_count = 0
+        self.False_count = 0
+
+    def __eq__(self, other):
+        return self.True_count == other.True_count and self.False_count == other.False_count
+
+    # 根据另外一个对象修改自己的成员变量
+    def change_like(self, other):
+        self.True_count = other.True_count
+        self.False_count = other.False_count
+
+
+# 船类
+class Boat:
+    def __init__(self, bank1: Bank, bank2: Bank):
+        if bank1.name == bank2.name:
+            raise ValueError('岸名相同')
+        self.capacity = 2
+        self.current_person = 0
+        self.thisbank = bank1
+        self.thatbank = bank2
+        self.destination_name = bank2.name
+
+    def change_like(self, other):
+        self.current_person = other.current_person
+        self.thisbank = other.thisbank
+        self.thatbank = other.thatbank
+
+    def __eq__(self, other):
+        return self.thisbank == other.thisbank and self.thatbank == other.thatbank
+
+    def transform(self, person1: Person, person2: Person = None):
+        # 至少有一个乘员
+        if person1 == None:
+            return False
+        # 单人运输到无人岸没有意义
+        elif person2 == None:
+            if (self.thatbank.False_count + self.thatbank.True_count) == 0:
+                return False
+        # thisbank = self.current_pos
+        # thatbank = self.initial_position if not self.current_pos is self.initial_position else self.alternative_pos
+        # 计算乘客True人和False人数量
+        True_count = 0
+        False_count = 0
+        if person1 != None and person1.kind:
+            True_count += 1
+        elif person1 != None and not person1.kind:
+            False_count += 1
+        if person2 != None and person2.kind:
+            True_count += 1
+        elif person2 != None and not person2.kind:
+            False_count += 1
+        if self.thisbank.True_count - True_count >= 0 and self.thisbank.False_count - False_count >= 0:
+            # 检查运输中途是否有吃人情况
+            if 0 < self.thisbank.True_count - True_count < self.thisbank.False_count - False_count:
+                return False
+            if 0 < self.thatbank.True_count < self.thatbank.False_count:
+                return False
+            # 从当前岸减去相应人到对岸
+            self.thisbank.True_count -= True_count
+            self.thisbank.False_count -= False_count
+            self.thatbank.True_count += True_count
+            self.thatbank.False_count += False_count
+            # 检查运输完毕是否有吃人情况发生
+            if 0 < self.thatbank.True_count < self.thatbank.False_count:
+                return False
+            if 0 < self.thisbank.True_count < self.thisbank.False_count:
+                return False
+        else:
+            return False
+        # 更改船靠岸信息
+        self.thisbank, self.thatbank = self.thatbank, self.thisbank
+        return True
+
+
+def pass_person(boat: Boat, memo: list = []):  # memo用于记录两岸人和船的状态，三元素分别是前岸（食人族数、传教士数）、后岸（食人族数、传教士数）、船（位置）
+    # 检查初始人数
+    missionary = boat.thisbank.True_count + boat.thatbank.True_count
+    cannibal = boat.thisbank.False_count + boat.thatbank.False_count
+    if missionary < cannibal:
+        return ''
+
+    # memo用于记录两岸人和船的状态,记录的全是失败的状态，元素的三子元素分别是前岸、后岸、船
+    def pass_history(mode: bool = True):  # mode False是只检索状态，用于不能确定是失败尝试时使用，比如base case中的情况并非失败尝试，只是不能作为base case
+        # 首次记录
+        nonlocal memo
+        # 找到记录
+        if memo.count((bank_to_leave, bank_to_reach, boat)) > 0:
+            # 不通过历史检查
+            return False
+        else:
+            # 存储记录
+            if mode:
+                memo.append((deepcopy(bank_to_leave), deepcopy(bank_to_reach), deepcopy(boat)))
+            # 通过历史检查
+            return True
+
+    # 确定前后岸
+    bank_to_leave = boat.thisbank if boat.thatbank.name == boat.destination_name else boat.thatbank
+    bank_to_reach = boat.thatbank if boat.thatbank.name == boat.destination_name else boat.thisbank
+    # 状态备份
+    current_bank_to_leave = copy(bank_to_leave)
+    curent_bank_to_reach = copy(bank_to_reach)
+    current_boat = copy(boat)  # boat里的Bank类实例用的不是值，而是引用，用于对Bank实例的修改
+    # 成功情况是全部运输到对岸
+    # 最后的运输有这么几种情况
+    # 随机顺序
+    order = list(range(3))
+    randomor = random.Random()
+    randomor.shuffle(order)
+    for i in order:
+        if i == 0:
+            # 1、运输了两个食人族
+            if boat.transform(Person(False), Person(False)) and pass_history(False) and \
+                    boat.thisbank == bank_to_reach and bank_to_reach.True_count == missionary and bank_to_reach.False_count == cannibal and \
+                    bank_to_leave.False_count == 0 and bank_to_leave.True_count == 0:
+                return '运输2个食人族'
+        elif i == 1:
+            # 2、运输一个食人族和一个传教士
+            if boat.transform(Person(False), Person(True)) and pass_history(False) and \
+                    boat.thisbank == bank_to_reach and bank_to_reach.True_count == missionary and bank_to_reach.False_count == cannibal and \
+                    bank_to_leave.False_count == 0 and bank_to_leave.True_count == 0:
+                return '运输1个食人族和1个传教士'
+        else:
+            # 3、运输了两个传教士
+            if boat.transform(Person(True), Person(True)) and pass_history(False) and \
+                    boat.thisbank == bank_to_reach and bank_to_reach.True_count == missionary and bank_to_reach.False_count == cannibal and \
+                    bank_to_leave.False_count == 0 and bank_to_leave.True_count == 0:
+                return '运输2个传教士'
+
+        # 恢复
+        bank_to_leave.change_like(current_bank_to_leave)
+        bank_to_reach.change_like(curent_bank_to_reach)
+        boat.change_like(current_boat)
+
+    # 抵消重复操作
+    def remove_same(s: str):
+        pos0 = s.find('\n')
+        pos1 = s[pos0 + 1:].find('\n')
+        s0 = s[:pos0]
+        s1 = s[pos0 + 1:][:pos1]
+        if s0 == s1:
+            return s[pos0 + 1:][pos1 + 1:]
+        else:
+            return s
+
+    # 递归情况
+    # 随机选择
+    order = list(range(5))
+    randomor.shuffle(order)
+    for i in order:
+        if i == 0:
+            # 1、运输了一个传教士
+            if boat.transform(Person(True)) and pass_history():
+                next_transform = pass_person(boat)
+                if next_transform != '':
+                    return remove_same('运输1个传教士\n' + next_transform)
+        elif i == 1:
+            # 2、运输了一个食人族
+            if boat.transform(Person(False)) and pass_history():
+                next_transform = pass_person(boat)
+                if next_transform != '':
+                    return remove_same('运输1个食人族\n' + next_transform)
+        elif i == 2:
+            # 3、运输了两个传教士
+            if boat.transform(Person(True), Person(True)) and pass_history():
+                next_transform = pass_person(boat)
+
+                if next_transform != '':
+                    return remove_same('运输2个传教士\n' + next_transform)
+        elif i == 3:
+            # 4、运输了两个食人族
+            if boat.transform(Person(False), Person(False)) and pass_history():
+                next_transform = pass_person(boat)
+                if next_transform != '':
+                    return remove_same('运输2个食人族\n' + next_transform)
+        elif i == 4:
+            # 5、运输一个传教士和食人族
+            if boat.transform(Person(True), Person(False)) and pass_history():
+                next_transform = pass_person(boat)
+                if next_transform != '':
+                    return remove_same('运输1个食人族和1个传教士\n' + next_transform)
+        # 恢复
+        bank_to_leave.change_like(current_bank_to_leave)
+        bank_to_reach.change_like(curent_bank_to_reach)
+        boat.change_like(current_boat)
+    return ''
+
+
+if __name__ == '__main__':
+    boat = Boat(Bank('前岸'), Bank('后岸'))
+    # 设置传教士数量
+    boat.thisbank.True_count = 8
+    # 设置食人族数量
+    boat.thisbank.False_count = 7
+    print(pass_person(boat))
