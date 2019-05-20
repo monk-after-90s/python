@@ -56,7 +56,7 @@ statusCollection = filterSafe(allStatus)
 s = statusCollection
 init = s.index((3, 3, 1))
 s[0], s[init] = s[init], s[0]
-solutions = []   #用来保存最终的解决方案
+solutions = []  #用来保存最终的解决方案
 
 def isNext(preItem=(3, 3, 1),item=(3, 1, 0)):
     '''可以从上一个状态转变为下一个状态吗？'''
