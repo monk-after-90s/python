@@ -6,6 +6,7 @@ class TreeNode:
         self.leftChild = left
         self.rightChild = right
         self.parent = parent
+        self.balanceFactor = 0
 
     def hasLeftChild(self):
         return self.leftChild
@@ -65,7 +66,7 @@ class TreeNode:
         if self.isLeaf():
             if self.isLeftChild():
                 self.parent.leftChild = None
-            else:
+            elif self.isRightChild():
                 self.parent.rightChild = None
         elif self.hasAnyChildren():
             if self.hasLeftChild():
@@ -120,13 +121,49 @@ class BinarySearchTree:
                 self._put(key, val, currentNode.leftChild)
             else:
                 currentNode.leftChild = TreeNode(key, val, parent=currentNode)
-        elif key > currentNode.key:
+                self.updateBalance(currentNode.leftChild)
+        else:
             if currentNode.hasRightChild():
                 self._put(key, val, currentNode.rightChild)
             else:
                 currentNode.rightChild = TreeNode(key, val, parent=currentNode)
-        else:
-            currentNode.payload = val
+                self.updateBalance(currentNode.rightChild)
+
+    def updateBalance(self, node, mode=True):  # mode True为增加node False为删除node
+        if node.balanceFactor > 1 or node.balanceFactor < -1:
+            self.rebalance(node)
+            return
+        # 下面的适用于leaf Node
+        if node.parent != None:
+            if mode == True:
+                if node.isLeftChild():
+                    node.parent.balanceFactor += 1
+                elif node.isRightChild():
+                    node.parent.balanceFactor -= 1
+
+                if node.parent.balanceFactor != 0:
+                    self.updateBalance(node.parent)
+            else:
+                if node.isLeftChild():
+                    node.parent.balanceFactor -= 1
+                elif node.isRightChild():
+                    node.balanceFactor += 1
+                if node.parent.balanceFactor != 0:
+                    self.updateBalance(node.parent, False)
+
+    def rebalance(self, node):
+        if node.balanceFactor < 0:
+            if node.rightChild.balanceFactor > 0:
+                self.rotateRight(node.rightChild)
+                self.rotateLeft(node)
+            else:
+                self.rotateLeft(node)
+        elif node.balanceFactor > 0:
+            if node.leftChild.balanceFactor < 0:
+                self.rotateLeft(node.leftChild)
+                self.rotateRight(node)
+            else:
+                self.rotateRight(node)
 
     def __setitem__(self, k, v):
         self.put(k, v)
@@ -158,41 +195,69 @@ class BinarySearchTree:
         self.delete(key)
 
     def remove(self, currentNode):
-        if currentNode.isLeaf():
-            if currentNode == currentNode.parent.leftChild:
-                currentNode.parent.leftChild = None
+        if currentNode.isLeaf():  # leaf
+            if currentNode.parent != None:
+                if currentNode == currentNode.parent.leftChild:
+                    currentNode.parent.leftChild = None
+                else:
+                    currentNode.parent.rightChild = None
+                self.updateBalance(currentNode, False)
             else:
-                currentNode.parent.rightChild = None
+                self.root = None
+        elif currentNode.hasBothChildren():  # interior
+            succ = currentNode.findSuccessor()
+            succ.spliceOut()
+            if succ.isLeftChild():
+                succ.parent.balanceFactor -= 1
+            elif succ.isRightChild():
+                succ.parent.balanceFactor += 1
+            self.rebalance(succ)
+            currentNode.key = succ.key
+            currentNode.payload = succ.payload
+
         else:  # this node has one child
             if currentNode.hasLeftChild():
                 if currentNode.isLeftChild():
                     currentNode.leftChild.parent = currentNode.parent
                     currentNode.parent.leftChild = currentNode.leftChild
+                    currentNode.parent.balanceFactor -= 1
+                    if currentNode.parent.balanceFactor < -1 or currentNode.parent.balanceFactor > 1:
+                        self.rebalance(currentNode.parent)
+
                 elif currentNode.isRightChild():
                     currentNode.leftChild.parent = currentNode.parent
                     currentNode.parent.rightChild = currentNode.leftChild
+                    currentNode.parent.balanceFactor += 1
+                    if currentNode.parent.balanceFactor < -1 or currentNode.parent.balanceFactor > 1:
+                        self.rebalance(currentNode.parent)
                 else:
                     currentNode.replaceNodeData(currentNode.leftChild.key,
                                                 currentNode.leftChild.payload,
                                                 currentNode.leftChild.leftChild,
                                                 currentNode.leftChild.rightChild)
-            elif currentNode.hasBothChildren():  # interior
-                succ = currentNode.findSuccessor()
-                succ.spliceOut()
-                currentNode.key = succ.key
-                currentNode.payload = succ.payload
+                    currentNode.balanceFactor = currentNode.leftChild.balanceFactor
+
+
             else:
                 if currentNode.isLeftChild():
                     currentNode.rightChild.parent = currentNode.parent
                     currentNode.parent.leftChild = currentNode.rightChild
+                    currentNode.parent.balanceFactor -= 1
+                    if currentNode.parent.balanceFactor < -1 or currentNode.parent.balanceFactor > 1:
+                        self.rebalance(currentNode.parent)
+
                 elif currentNode.isRightChild():
                     currentNode.rightChild.parent = currentNode.parent
                     currentNode.parent.rightChild = currentNode.rightChild
+                    currentNode.parent.balanceFactor += 1
+                    if currentNode.parent.balanceFactor < -1 or currentNode.parent.balanceFactor > 1:
+                        self.rebalance(currentNode.parent)
                 else:
                     currentNode.replaceNodeData(currentNode.rightChild.key,
                                                 currentNode.rightChild.payload,
                                                 currentNode.rightChild.leftChild,
                                                 currentNode.rightChild.rightChild)
+                    currentNode.balanceFactor = currentNode.rightChild.balanceFactor
 
     def rotateLeft(self, rotRoot):
         newRoot = rotRoot.rightChild
@@ -229,7 +294,6 @@ class BinarySearchTree:
         rotRoot.parent = newRoot
         rotRoot.balanceFactor = rotRoot.balanceFactor - max(newRoot.balanceFactor, 0) - 1
         newRoot.balanceFactor = newRoot.balanceFactor - 1 + min(0, rotRoot.balanceFactor)
-
 
 
 if __name__ == '__main__':
