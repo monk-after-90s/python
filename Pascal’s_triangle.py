@@ -23,4 +23,4 @@ def Pascal_triangle(row: int):
         return above+ '\n' + '   '.join([str(i) for i in current_row])
 
 
-print(Pascal_triangle(8))
+print(Pascal_triangle(10))
