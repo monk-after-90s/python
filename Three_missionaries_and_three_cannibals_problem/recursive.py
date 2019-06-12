@@ -210,7 +210,7 @@ def pass_person(boat: Boat, memo: list = []):  # memo用于记录两岸人和船
 if __name__ == '__main__':
     boat = Boat(Bank('前岸'), Bank('后岸'))
     # 设置传教士数量
-    boat.thisbank.True_count = 8
+    boat.thisbank.True_count = 6
     # 设置食人族数量
-    boat.thisbank.False_count = 7
+    boat.thisbank.False_count = 6
     print(pass_person(boat))
