@@ -1,3 +1,4 @@
+from pythonds import Stack
 from pythonds.graphs import Graph, Vertex
 from pythonds.basic import Queue
 
@@ -122,6 +123,9 @@ class DFSGraph(Graph):
         startVertex.setColor('black')
         self.time += 1
         startVertex.setFinish(self.time)
+        if not hasattr(self, 'topological_sort_stack'):
+            self.topological_sort_stack = Stack()
+        self.topological_sort_stack.push(startVertex)
         return scc_keys
 
     # def dfsvisit(self, startVertex):

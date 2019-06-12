@@ -1,4 +1,4 @@
-from knight_tour import DFSGraph, Vertex
+from dfs_knight_tour import DFSGraph, Vertex
 
 
 def transposition_graph(self: DFSGraph):
@@ -25,12 +25,13 @@ def SCC_keys(self: DFSGraph):
         aVertex.setColor('white')
         aVertex.setPred(-1)
     # 根据原始Graph 节点finish time倒序排列确定key的顺序
-    org_vetices = list(self)
-    org_vetices.sort(key=lambda x: x.getFinish(), reverse=True)
-    for aVertex in org_vetices:
-        current_vertex = t_graph.getVertex(aVertex.getId())
+    # org_vetices = list(self)
+    # org_vetices.sort(key=lambda x: x.getFinish(), reverse=True)
+    while not self.topological_sort_stack.isEmpty():
+        current_vertex = t_graph.getVertex(self.topological_sort_stack.pop().getId())
         if current_vertex.getColor() == 'white':
             scc_keys += str(t_graph.dfsvisit(current_vertex)) + '\n'
+
     return scc_keys
 
 

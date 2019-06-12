@@ -127,11 +127,11 @@ def get_water(jug_A: Jug, jug_B: Jug, water_goal: int, memo: list) -> bool:  # m
                 jug_A, jug_B = deepcopy(current_jug_A), deepcopy(current_jug_B)
     return ''
 
-
-big_jug = Jug('', 7)
-small_jug = Jug('', 22)
-big_jug.name = str(big_jug.capacity) + 'L壶'
-small_jug.name = str(small_jug.capacity) + 'L壶'
-# 记录曾经有过的容量组合,最大序号是big_jug.capacity。用于记录试过的容量组合，序号为big_jug容量，值为small_jug容量列表
-memory_list = [0] * (big_jug.capacity + 1)
-print(get_water(big_jug, small_jug, 23, memory_list))
+if __name__ == '__main__':
+    big_jug = Jug('', 7)
+    small_jug = Jug('', 22)
+    big_jug.name = str(big_jug.capacity) + 'L壶'
+    small_jug.name = str(small_jug.capacity) + 'L壶'
+    # 记录曾经有过的容量组合,最大序号是big_jug.capacity。用于记录试过的容量组合，序号为big_jug容量，值为small_jug容量列表
+    memory_list = [0] * (big_jug.capacity + 1)
+    print(get_water(big_jug, small_jug, 23, memory_list))
