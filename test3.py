@@ -4,25 +4,24 @@ import asyncio
 
 async def taskIO_1():
     print('开始运行IO任务1...')
-    await asyncio.sleep(3)  # 假设该任务耗时3s
-    print('IO任务1已完成，耗时3s')
+    await asyncio.sleep(2)  # 假设该任务耗时2s
+    print('IO任务1已完成，耗时2s')
     return taskIO_1.__name__
 
 
 async def taskIO_2():
     print('开始运行IO任务2...')
-    await asyncio.sleep(2)  # 假设该任务耗时2s
-    print('IO任务2已完成，耗时2s')
+    await asyncio.sleep(3)  # 假设该任务耗时3s
+    print('IO任务2已完成，耗时3s')
     return taskIO_2.__name__
 
 
 async def main():  # 调用方
     tasks = [taskIO_1(), taskIO_2()]  # 把所有任务添加到task中
-    tasks_as_complete = asyncio.as_completed(tasks)
-    for completed_task in tasks_as_complete:
-        pass
-        # resualt = await completed_task  # 子生成器
-        # print('协程无序返回值：' + resualt)
+    done, pending = await asyncio.wait(tasks)  # 子生成器
+    print(f'done {done} pending{pending}')
+    for r in done:  # done和pending都是一个任务，所以返回结果需要逐个调用result()
+        print('协程无序返回值：' + r.result())
 
 
 if __name__ == '__main__':
