@@ -10,7 +10,9 @@ async def big_coro():
             for i in range(5):
                 async def coro2(i=i):
                     print('{}号协程启动'.format(i))
-                    await asyncio.sleep(2)
+                    await asyncio.sleep(3)
+                    print('{}号协程半途'.format(i))
+                    await asyncio.sleep(3)
                     print('{}号协程结束'.format(i))
 
                 tasks.append(coro2())
