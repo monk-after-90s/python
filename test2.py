@@ -1,21 +1,21 @@
-import asyncio
+from datetime import datetime
 
 
-async def eternity():
-    # Sleep for one hour
-    await asyncio.sleep(3)
-    print('yay!')
+def consumer():
+    temp_task = None
+    while True:
+        temp_task = yield f'{temp_task}完成，time:{datetime.now()}'
+        print(f'处理{temp_task}')
 
 
-async def main():
-    # Wait for at most 1 second
-    realtask = asyncio.create_task(eternity())
-    shiled_coro = asyncio.shield(realtask)
-    try:
-        await asyncio.wait_for(shiled_coro, timeout=1.0)
-    except asyncio.TimeoutError:
-        print('timeout!')
-    await realtask
+task_handler = consumer()
+task_handler.send(None)
+# next(task_handler)
+n = 1
+while True:
+    print(f'task_handler:{next(task_handler)}')
+    task_handler.send({f'{n}号任务'})
+    n += 1
 
-
-asyncio.run(main())
+# TODO 错位获取next
+# todo 用for实现
