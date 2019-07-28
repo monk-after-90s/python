@@ -18,4 +18,4 @@ async def coro(sleep_sec: int):
         print(f'Handle {task}，time:{datetime.now()}')
 
 
-asyncio.run(asyncio.wait([coro(1), coro(2)]))
+asyncio.run(asyncio.wait([coro(1), coro(2), coro(3)]))
